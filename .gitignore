@@ -1,0 +1,5 @@
+.git
+*/*.txt
+*/*.log
+*/drat-trim
+*/build
