@@ -12,9 +12,15 @@ The goal of this work is to deepen our understanding of CDCL-based SAT solvers b
 The experiments have been done in a cluster with 10 nodes of type Dell PowerEdge R240 with Intel Xeon E-2124. Every solver on a node is set to have 4 cores and 15GB of memory available. The time limit is 3600 seconds.
 
 
-# Dependencies
+# Prerequisites
 
 - [DRAT-trim](https://github.com/marijnheule/drat-trim) v05.22.2023 — proof checker
+
+```bash
+git clone https://github.com/marijnheule/drat-trim
+make .
+mv drat-trim ..
+```
 
 
 # Repository Structure
@@ -34,23 +40,13 @@ The proof simulation pipeline consists of four ordered steps.
 
 ---
 
-## Step 1 — Build DRAT-trim
-
-```bash
-git clone https://github.com/marijnheule/drat-trim
-make .
-mv drat-trim ..
-```
-
----
-
-## Step 2 — Generate a Resolution Proof (original CaDiCaL)
+## Step 1 — Generate a Resolution Proof (original CaDiCaL)
 
 > **Flags**
 > - `--rs=0` — Run the original CaDiCaL solver
 > - `--rs=1` — Read a branching sequence from an external file (default)
 
-**1). Run the original CaDiCaL to generate an unsatisfiability proof `proof.txt`:**
+**1). Generate an unsatisfiability proof `proof.txt` using the original CaDiCaL:**
 
 ```bash
 cd proof-simulation-read-sequence
@@ -59,7 +55,9 @@ cd proof-simulation-read-sequence
     cnf/add16.cnf proof.txt
 ```
 
-**2). Verify and trim the proof; output core lemmas to `trimmed_proof.txt`:**
+---
+
+## Step 2 — Verify and trim the proof; output core lemmas to `trimmed_proof.txt`
 
 ```bash
 ../drat-trim cnf/add16.cnf proof.txt -l trimmed_proof.txt
@@ -80,7 +78,7 @@ cd proof-simulation-write-sequence
     cnf/add16.cnf proof.txt
 ```
 
-**4). Verify proof correctness:**
+**4). Verify the proof:**
 
 ```bash
 ../drat-trim cnf/add16.cnf proof.txt
@@ -102,7 +100,7 @@ cd proof-simulation-write-sequence
     cnf/add16.cnf simulated_proof.txt
 ```
 
-**6). Verify proof correctness:**
+**6). Verify the proof:**
 
 ```bash
 ./drat-trim cnf/add16.cnf simulated_proof.txt
