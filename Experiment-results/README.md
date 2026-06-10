@@ -10,6 +10,7 @@ This directory contains the experimental outputs of the proof simulation pipelin
 Experiment-results/
 ├── Experiment-logs-sat24-unsat-plain-chrono0.tar.xz
 ├── Example-trimmedProof-branchSeq.tar.xz
+└── Example-5-cnf.tar.xz
 └── Plots
 └── README.md
 ```
@@ -54,3 +55,6 @@ Example output files from the proof simulation pipeline for 5 instances (due to 
 9cd3acdb765c15163bc239ae3a57f880-FmlaEquivChain_4_6_6.sanitized.cnf.seq
 ```
 
+### `Example-5-cnf.tar.xz`
+
+Five small instances from SAT Competition 2024 used in the proof simulation pipeline.
