@@ -30,7 +30,7 @@ mv drat-trim ..
 | `proof-simulation-write-sequence` | Modified CaDiCaL solver for constructing a branching sequence `σ` from a trimmed DRAT proof |
 | `proof-simulation-read-sequence` | Solver that operates in two modes: **(1)** original CaDiCaL to generate a DRAT proof, or **(2)** simulating solver that reads a sequence `σ` to reproduce the proof |
 | `Benchmarks_SAT24_B50` | Benchmark instances |
-| `Output-sat24-unsat-plain-chrono0` | Experiment output files |
+| `Experiment-results` | Output logs for all instances + 5 example trimmed proofs and branching sequences |
 | `Summary-data-proof-simulation.ods` | Summary data spreadsheet |
 
 
