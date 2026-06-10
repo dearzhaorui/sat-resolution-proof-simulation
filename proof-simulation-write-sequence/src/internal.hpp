@@ -1271,22 +1271,17 @@ struct Internal {
   bool read_next_lemma (ifstream& in, bool& deleted);
   bool is_provable (vector<int>& c);
   void scan_possible_empow_lit (vector<int>& c, vector<int>& idx_v);
-  bool is_empowering_wrt_lit (vector<int>& c, int idx);
-  bool is_empowering_wrt_lit_no_bt (vector<int>& c, int idx);
-  bool is_empowering_wrt_lit_no_bt2 (vector<int>& c, int idx);
-  bool is_empowering_wrt_lit_no_bt_revert (vector<int>& c, int idx);
-  bool is_empowering_wrt_lit_no_bt2_revert (vector<int>& c, int idx);
-  bool is_empowering_wrt_lit_no_bt_other_first (vector<int>& c, int idx, int p, vector<int>& possible_empow_lit_idx);
-  void set_other_lits_to_false_and_propagate (const int idx, const int p, vector<int>& possible_empow_lit_idx, int nDecs);
-  void propagate_false_other_possible_empowering_lits (const int p, vector<int>& possible_empow_lit_idx, int& nDecs);
+  bool is_literal_empowering (vector<int>& c, int idx);
+  bool is_literal_empowering2 (vector<int>& c, int idx);
+  bool is_literal_empowering_revert (vector<int>& c, int idx);
+  bool is_literal_empowering2_revert (vector<int>& c, int idx);
+  int  write_branching_sequence ( );  // simulate proof + generate branch sequence
   
-  bool is_empowering_wrt_lit_no_bt2_other_first (vector<int>& c, int idx, int p, vector<int>& possible_empow_lit_idx);
-  int  write_sequence_reuse_trail_scan_empoLits_revert ();  // simulate proof + generate branch sequence
   bool clause_subsume_lits (Clause *c, vector<int>& lits);
   bool clause_equal_to_lits (Clause *c, vector<int>& lits);
   bool lits_equal_to_lits (vector<int>& a, vector<int>& b);
   void check_and_count(Clause *c, vector<int>& lemma_copy, int& numSameSize, int& numSameLemma, int& numShorterLemma, int& numSubsumeLemma, bool& found_equal_lemma );
-  void checkAllClausesPropagated ();
+  void checkAllClausesPropagated (); // check both the original and copied DB
   void checkAllClausesPropagated_in_originalDB ();
   void checkAllClausesPropagated_in_copiedDB ();
   // -----------------------------------------

@@ -240,7 +240,7 @@ namespace CaDiCaL {
     
     int res = 0;
     if (write_sequence) {
-        res = write_sequence_reuse_trail_scan_empoLits_revert();
+      res = write_branching_sequence(); // reuse trail + scan possible empow.Lits + decide on lits in revert order
     }
     
     return res;

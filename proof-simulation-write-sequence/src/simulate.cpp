@@ -39,7 +39,7 @@ namespace CaDiCaL {
   }
 
   
-  bool Internal::is_empowering_wrt_lit_no_bt (vector<int>& c, int idx) {
+  bool Internal::is_literal_empowering (vector<int>& c, int idx) {
     assert(!conflict);
     if(isUnit(c[idx])) return false;
     else assert(val(c[idx]) == 0); // undef
@@ -75,7 +75,7 @@ namespace CaDiCaL {
     return is_empowering;
   }
   
-  bool Internal::is_empowering_wrt_lit_no_bt2 (vector<int>& c, int idx) {
+  bool Internal::is_literal_empowering2 (vector<int>& c, int idx) {
     assert(!conflict);
     if(isUnit(c[idx])) return false;
     else assert(val(c[idx]) == 0); // undef
@@ -111,7 +111,7 @@ namespace CaDiCaL {
     return is_empowering;
   }
   
-  bool Internal::is_empowering_wrt_lit_no_bt_revert (vector<int>& c, int idx) {
+  bool Internal::is_literal_empowering_revert (vector<int>& c, int idx) {
     assert(!conflict);
     if(isUnit(c[idx])) return false;
     else assert(val(c[idx]) == 0); // undef
@@ -146,7 +146,7 @@ namespace CaDiCaL {
     return is_empowering;
   }
   
-  bool Internal::is_empowering_wrt_lit_no_bt2_revert (vector<int>& c, int idx) {
+  bool Internal::is_literal_empowering2_revert (vector<int>& c, int idx) {
     assert(!conflict);
     if(isUnit(c[idx])) return false;
     else assert(val(c[idx]) == 0); // undef
@@ -155,7 +155,7 @@ namespace CaDiCaL {
     assert(propagated == trail.size());
     if (!propagate2()) conf_found = true;
     
-    for (int i = int(c.size()-1); not conf_found and i >= 0; --i) {
+    for (int i = int(c.size()-1); not conf_found and i >= 0; --i) { // decide on lit in ¬C from right to left
       if (i == idx) continue;
 
       if (val(c[i]) == 1) conf_found = true; // if true, it is not 1-empowering
@@ -163,202 +163,6 @@ namespace CaDiCaL {
         ++stats.decisions;
         search_assume_decision(-c[i]); // next decision
         if (!propagate2()) {conf_found = true; backtrack(level-1); } // propagation gave a conflict                     
-      }
-    }
-
-    [[maybe_unused]] bool is_empowering = (not conf_found and val(c[idx]) == 0);
-    conflict = 0;
-    
-    return is_empowering;
-  }
-  
-  bool Internal::is_empowering_wrt_lit_no_bt_other_first (vector<int>& c, int idx, int p, vector<int>& possible_empow_lit_idx) {
-    assert(!conflict);
-    if(isUnit(c[idx])) return false;
-    else assert(val(c[idx]) == 0); // undef
-    bool conf_found = false;
-    int numDecs = 0;
-    assert(propagated == trail.size());
-    if (!propagate()) conf_found = true;
-
-    // propagate the imlpossible empow lits if it exists after bt, and the previous unmarked absorbed empow lit
-    for (int i = 0; not conf_found and i < (int)lemma.size(); ++i) {
-    //for (int i = int(lemma.size()-1); not conf_found and i >= 0; --i) {
-      int lit = lemma[i];
-      if (!possi_empow_lit(lit)) { // not marked
-        assert(val(lit) != 1); // otherwise, there is a conflict
-        if (val(lit) == 0) {
-          out << -lit << " " << flush;
-          ++numDecs;
-          ++stats.decisions;
-          ++stats.decisionsSimRead;
-          search_assume_decision(-lit); // next decision
-          if (!propagate()) {conf_found = true; backtrack(level-1); }
-        }
-      }
-    }
-    // propagate other possible empow lits, except for the current empow lit
-    for (uint k = p+1; not conf_found and k < possible_empow_lit_idx.size(); ++k) {
-    //for (int k = int(possible_empow_lit_idx.size()-1); not conf_found and k > p; --k) {
-      int posi_idx = possible_empow_lit_idx[k];
-      int lit = lemma[posi_idx];
-      assert(possi_empow_lit(lit));
-      
-      if (val(lit) == 1) conf_found = true; // if true, it is not 1-empowering
-      else if (val(lit) == 0) { // if undef --> set it to false and prop. If false --> skip it
-        out << -lit << " " << flush;
-        ++numDecs;
-        ++stats.decisions;
-        ++stats.decisionsSimRead;
-        search_assume_decision(-lit); // next decision
-        if (!propagate()) {conf_found = true; backtrack(level-1); } // propagation gave a conflict                       
-      }
-    }
-
-    [[maybe_unused]] bool is_empowering = (not conf_found and val(c[idx]) == 0);
-    conflict = 0;
-    
-    if (c.size() > 1) {
-      if (is_empowering) ++numDecs;
-      stats.sumPercDecs += (double)numDecs/c.size();
-      ++stats.sumNumLemmas;
-    }
-    
-    return is_empowering;
-  }
-  
-
-  void Internal::set_other_lits_to_false_and_propagate ([[maybe_unused]] const int idx, const int p, vector<int>& possible_empow_lit_idx, int nDecs) {
-    
-    bool conf_found = false;
-    int propagated2;
-    
-    // propagate the imlpossible empow lits if it exists after bt, and the previous unmarked absorbed empow lit
-    for (int k = 0; !conflict and k < (int)lemma.size(); ++k) {
-    //for (int k = int(lemma.size()-1); !conflict and k >= 0; --k) {
-      int lit = lemma[k];
-      if (!possi_empow_lit(lit)) { // not marked
-        assert(possi_empow_lit(lit) <= 0);
-        assert(val(lit) != 1); // otherwise, there is a conflict
-        assert(k != idx);
-        if (val(lit) == 0) {
-          out << -lit << " " << flush;
-          ++nDecs;
-          ++stats.decisions;
-          ++stats.decisionsSimRead;
-          search_assume_decision(-lit); // next decision
-          propagated2 = propagated;
-          propagate();
-          assert(!conflict);
-          [[maybe_unused]] uint ts = trail.size();
-          propagated = propagated2;
-          propagate2();
-          assert(!conflict);
-          assert(ts == trail.size());
-          
-        }
-      }
-    }
-    //checkAllClausesPropagated();
-    
-    // propagate other possible empow lits, except for the current empow lit
-    for (uint k = p+1; not conf_found and k < possible_empow_lit_idx.size(); ++k) {
-    //for (uint k = possible_empow_lit_idx.size()-1; not conf_found and k > p; --k) {
-      int posi_idx = possible_empow_lit_idx[k];
-      int lit = lemma[posi_idx];
-      assert(possi_empow_lit(lit));
-      
-      if (val(lit) == 1) conf_found = true; // if true, it is not 1-empowering
-      else if (val(lit) == 0) { // if undef --> set it to false and prop. If false --> skip it
-        out << -lit << " " << flush;
-        ++nDecs;
-        ++stats.decisions;
-        ++stats.decisionsSimRead;
-        propagated2 = propagated;
-        search_assume_decision(-lit); // next decision
-        if (!propagate()) conf_found = true; // propagation gave a conflict      
-        [[maybe_unused]] uint ts = trail.size();
-        propagated = propagated2;
-        propagate2();
-        assert(!conflict);
-        assert(ts == trail.size());
-      }
-    }
-    
-    assert(propagated == trail.size());
-    assert(not conf_found and val(lemma[idx]) == 0);
-    
-    //if(conf_found or val(lemma[idx]) != 0) {
-      //cout << endl << "error: conf_found? " << conf_found << ", val = " << (int)val(lemma[idx]) << ", level " << level << endl;
-      //exit(0);
-    //}
-    
-  }
-  
-  void Internal::propagate_false_other_possible_empowering_lits (const int p, vector<int>& possible_empow_lit_idx, int& nDecs) {
-    bool conf_found = false;
-    // propagate other possible empow lits, except for the current empow lit
-    //for (uint k = p+1; not conf_found and k < possible_empow_lit_idx.size(); ++k) {  
-    for (int k = (int)possible_empow_lit_idx.size()-1; not conf_found and k > p; --k) { // this reverse order seems slightly better
-      int posi_idx = possible_empow_lit_idx[k];
-      int lit = lemma[posi_idx];
-      assert(possi_empow_lit(lit));
-      
-      if (val(lit) == 1) conf_found = true; // if true, it is not 1-empowering
-      else if (val(lit) == 0) { // if undef --> set it to false and prop. If false --> skip it
-        out << -lit << " " << flush;
-        ++nDecs;
-        ++stats.decisions;
-        ++stats.decisionsSimRead;
-        int propagated2 = propagated;
-        search_assume_decision(-lit); // next decision
-        if (!propagate()) conf_found = true; // propagation gave a conflict      
-        [[maybe_unused]] uint ts = trail.size();
-        propagated = propagated2;
-        propagate2();
-        assert(!conflict);
-        assert(ts == trail.size());
-      }
-    }
-    
-    assert(propagated == trail.size());
-    assert(not conf_found and val(lemma[possible_empow_lit_idx[p]]) == 0); // current empow lit is undef
-  }
-
-  // Propagate the duplicated DB: propagate2()
-  bool Internal::is_empowering_wrt_lit_no_bt2_other_first (vector<int>& c, int idx, int p, vector<int>& possible_empow_lit_idx) {
-    assert(!conflict);
-    if(isUnit(c[idx])) return false;
-    else assert(val(c[idx]) == 0); // undef
-    bool conf_found = false;
-    assert(propagated == trail.size());
-    if (!propagate2()) conf_found = true;
-    assert(possi_empow_lit(c[idx]));
-    // propagate the imlpossible empow lits if it exists after bt, and the previous unmarked absorbed empow lit
-    for (int i = int(lemma.size()-1); not conf_found and i >= 0; --i) {
-      int lit = lemma[i];
-      if (not possi_empow_lit(lit)) { // not marked
-        assert(possi_empow_lit(lit) <= 0);
-        assert(i != idx);
-        if (val(lit) == 1) conf_found = true;
-        else if (val(lit) == 0) {
-          ++stats.decisions;
-          search_assume_decision(-lit); // next decision
-          if (!propagate2()) { conf_found = true; backtrack(level-1); }
-        }
-      }
-    }
-    // propagate other possible empow lits, except for the current empow lit
-    for (int k = int(possible_empow_lit_idx.size()-1); not conf_found and k > p; --k) {
-      int posi_idx = possible_empow_lit_idx[k];
-      int lit = lemma[posi_idx];
-      assert(possi_empow_lit(lit));
-      
-      if (val(lit) == 1) conf_found = true; // if true, it is not 1-empowering
-      else if (val(lit) == 0) { // if undef --> set it to false and prop. If false --> skip it
-        ++stats.decisions;
-        search_assume_decision(-lit); // next decision
-        if (!propagate2()) {conf_found = true; backtrack(level-1);} // propagation gave a conflict                       
       }
     }
 
@@ -394,14 +198,13 @@ namespace CaDiCaL {
         assert(lit_level == 0 or val(c[i]) == 0);
       }
       
-      [[maybe_unused]] bool is_emp = is_empowering_wrt_lit_no_bt2_revert(c, i);
+      [[maybe_unused]] bool is_emp = is_literal_empowering2_revert(c, i);
       
       if (is_emp) idx_v.push_back(i);
     }
     
   }
 
-  
   bool Internal::read_next_lemma (ifstream& in, bool& deleted) {
     deleted = false;
     assert(lemma.size() == 0);
@@ -549,10 +352,11 @@ namespace CaDiCaL {
 
 
 
-//./build/cadical --chrono=0 --compact=0 --decompose=0 -sequence sequence.txt -core ../proof-simulation-read-sequence/core.txt  cnf/add16.cnf prf.txt
+//./build/cadical --plain --chrono=0 --inprocessing=false --walk=false -core ../proof-simulation-read-sequence/core.txt -sequence sequence.txt cnf/add16.cnf proof.txt
 
-// optimized version: Use trail between multiple empow. lits and more than 1 analysis
-  int Internal::write_sequence_reuse_trail_scan_empoLits_revert () { // check properties, return #clauses that are both empowering and provable
+// optimized version: Use trail between multiple empow. lits and multiple iterations
+// check properties, return #clauses that are both empowering and provable
+  int Internal::write_branching_sequence () { 
  
     int res = 0;
 
@@ -590,16 +394,9 @@ namespace CaDiCaL {
       assert(!conflict);
       assert(!level);
       ++numCoreLemmas;
-      
-      if(lemma.size() == 1 and val(lemma[0]) == -1) { // not provable, benchmark: add128.cnf -chrono=1
-        out << lemma[0] << endl;
-        cout << "found core lemma is unit " << lemma[0] << ", and it's false!" << endl;
-        res = 20;
-        continue;
-      }
-      //assert(is_provable(lemma)); // this is the property of all lemmas
+      //assert(is_provable(lemma)); // this should be true for all core lemmas
 
-  // ------------- scan possible empowing lits ------------------
+  // ------------- scan all possible 1-empowing lits at  beginning ------------------
       vector<int> possible_empow_lit_idx;
       scan_possible_empow_lit(lemma, possible_empow_lit_idx); // use DB2
   // ------------------------------------------------------------
@@ -619,41 +416,41 @@ namespace CaDiCaL {
       vector<int> lemma_sorted = lemma;
       sort(lemma_sorted.begin(), lemma_sorted.end(), [](const int& l1, const int& l2) {return abs(l1) < abs(l2);});
       
-      int last_level_DB_status = 0; // the last trail status generated by the propagation of normal DB
+      int last_level_DB_status = 0; // the last trail status generated by the propagation in the original DB
       
       for (uint p = 0; !found_equal_lemma && !res && p < possible_empow_lit_idx.size(); ++p) {
         assert(!conflict);
         
         int i = possible_empow_lit_idx[p];
         
-        if(lemma.size() == 1) assert(val(lemma[0]) != -1);
+        if (lemma.size() == 1) assert(val(lemma[0]) != -1);
 
-        if(val(lemma[i]) != 0) { // should backtrack to a level that its undef
+        if (val(lemma[i]) != 0) { // should backtrack to a level that it's undef
           int lit_level = var(lemma[i]).level;
           assert(lit_level >= 0);
-          if(lit_level > 0) backtrack(lit_level-1); // make sure the checked lit is undef now. except units
+          if (lit_level > 0) backtrack(lit_level-1); // make sure the checked lit is undef now. except units
           assert(lit_level == 0 or val(lemma[i]) == 0);
           if (level < last_level_DB_status) last_level_DB_status = level; // if current level is smaller than last_level_DB_status, than update it
         }
         
-        [[maybe_unused]] bool is_emp = is_empowering_wrt_lit_no_bt2_revert(lemma, i);
+        bool is_emp = is_literal_empowering2_revert(lemma, i);
         
-        if (not is_emp) { 
+        if (not is_emp) {
           assert(propagated == trail.size());
           continue;
         }
        
-        if(level != last_level_DB_status) { // propagate the original DB
+        if (level != last_level_DB_status) { // propagate the original DB
           assert(level >= last_level_DB_status);
           backtrack(last_level_DB_status);
-          if(numEmpowerLits > 0) out << "bt " << last_level_DB_status << " "; // only need to print for 2nd empow. lit
+          if (numEmpowerLits > 0) out << "bt " << last_level_DB_status << " "; // only need to print for 2nd empow. lit
         }
         if (level > 0) {++numNotBacktrackTo0; numLevelsReused += level;}
         
         assert(!conflict);
         bool conf_found = false;
         int nDecs = 0;
-        for (int k = int(lemma.size()-1); not conf_found and k >= 0; --k) {
+        for (int k = int(lemma.size()-1); not conf_found and k >= 0; --k) { // decide in reverse order
           if (k == i) continue;
           if (val(lemma[k]) == 1) conf_found = true; // only for debugging, if true, it is not 1-empowering
           else if (val(lemma[k]) == 0) { // if undef --> set it to false and prop. If false --> skip it
@@ -679,8 +476,8 @@ namespace CaDiCaL {
         bool absorbed = false;
         
         while (!res and not absorbed) {
-          // Here we should decide the negation of all literals except lemma[i].
-          // But this has already been done in the previous call to is_empowering_wrt_lit_no_bt
+          // Here we should decide on the negation of all literals except lemma[i].
+          // But this has already been done in the previous call to is_literal_empowering
 
           ++numAnalysis;
           ++stats.decisions;
@@ -693,8 +490,7 @@ namespace CaDiCaL {
           assert(conflict);
           
           analyze();
-          assert(!unsat);
-          assert(!conflict);
+          assert(!unsat && !conflict);
           assert(propagated == trail.size()-1);
           int propagated2 = propagated;
           Clause * r = var(trail[propagated]).reason;
@@ -705,41 +501,40 @@ namespace CaDiCaL {
             if (level == 0) {cout << "conflict at dl 0!" << endl << endl << flush; res = 20;} // UNSAT
             else {
               backtrack(level-1);
-              last_level_DB_status = level;
+              last_level_DB_status = level; // Reuse trail when absorbing next empowering lit
               conflict = 0;
-              absorbed = true;  // todo: analysis + when no conflict, read next(R)
+              absorbed = true;
               if(count) check_and_count(r, lemma_sorted, numSameSize, numSameLemma, numShorterLemma, numSubsumeLemma, found_equal_lemma);
             }
           }
           else {  // no conflict
-            bool easy_absortion = (val(lemma[i]) != 0);
+            bool cheap_absortion = (val(lemma[i]) == 1); // the empowering lit can be drived now.
             assert(!conflict);
             [[maybe_unused]] uint ts = trail.size();
-            propagated = propagated2;  // keep same propagation in two DBs
+            propagated = propagated2;  // keep same propagation status in two DBs
             propagate2();
             assert(ts == trail.size());
             assert(!conflict);
             last_level_DB_status = level;
             
-            if (easy_absortion) {
+            if (cheap_absortion) {
               absorbed = true;
               if(count) check_and_count(r, lemma_sorted, numSameSize, numSameLemma, numShorterLemma, numSubsumeLemma, found_equal_lemma);
             }
             else {
               int  current_level = level;
               
-              bool is_emp = is_empowering_wrt_lit_no_bt2_revert(lemma, i);  // DB2
+              bool is_emp = is_literal_empowering2_revert(lemma, i); // propagate only in copied DB (DB2)
               ++numEmpowChecksIfNoConf;
               
-              if (not is_emp) { //Note: if (conflict or lemma[i] != 0) then level > current_level, 
-                                //otherwise (other is true), then level >= current_level
+              if (not is_emp) {
                 assert(level >= current_level);
                 absorbed = true;
                 if(count) check_and_count(r, lemma_sorted, numSameSize, numSameLemma, numShorterLemma, numSubsumeLemma, found_equal_lemma);
               }
               else {
                 backtrack(current_level);
-                [[maybe_unused]] bool is_emp = is_empowering_wrt_lit_no_bt_revert(lemma, i);
+                [[maybe_unused]] bool is_emp = is_literal_empowering_revert(lemma, i); // propagate only in original DB
                 assert(is_emp);
                 assert(var(lemma[i]).level > current_level); // it should be undef, but it's previous level still exist in model.
                 
@@ -763,8 +558,7 @@ namespace CaDiCaL {
             
           } // no conflict
         } // end of while()
-        
-        
+
       } // end of for() :  finish processing this core lemam
       
       assert(numEmpowerLits > 0);

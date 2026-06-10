@@ -38,8 +38,6 @@ namespace CaDiCaL {
         ++n;
         assert(isdigit(lit[0]) or lit[0] == '-');
         
-        if(stoi(lit) > level) {cout << endl << "-----level " << level << ", now " << stoi(lit) << ", nConf " << stats.conflicts << ", num_true " << num_true << ", stats.restarts " << stats.restarts << endl; exit(0); }
-        
         backtrack(stoi(lit));
         conflict = 0;
         assert (propagated == trail.size ());
@@ -47,16 +45,15 @@ namespace CaDiCaL {
       }
       
       assert(isdigit(lit[0]) or lit[0] == '-');
-      if (!isdigit(lit[0]) and  (lit[0] != '-')) {
-        cout << "lit " << lit << " ,   '" << lit[1] << "' , '" << lit.c_str()[1] << "' , " << !isdigit(lit[0]) << " , " << (lit[0] != '-') << ", n " << n << endl;
-        exit(0);
-      }
       
-      if (val(stoi(lit)) != 0) { // should not run, because the sequence contains only the decision lits 
+      // in the optimized version, the lits that are propagated to be true in ¬C will not be wtiten in branching sequence
+      // So, this block should not run, because the sequence contains only the decision lits 
+      if (val(stoi(lit)) != 0) {
         ++stats.decisions;
         ++num_true;
         assert(val(stoi(lit)) == 1);
         assert(propagated == trail.size ());
+        assert(false);
         continue;
       }
       assert(!conflict);
@@ -66,16 +63,16 @@ namespace CaDiCaL {
       search_assume_decision (stoi(lit));
       propagate();
       
-      if (conflict) {  // todo: analysis + when no conflict, read next(R)
-        if (!level) {res = 20; cout << "conflict at dl 0!" << endl << endl << flush;}
+      if (conflict) {
+        if (!level) {res = 20; cout << "Conflict at DL 0 !" << endl << endl << flush;}
         else {
           analyze();
           assert(!unsat);
-          propagate(); // it may be still conflicting
+          propagate(); // It may be still conflicting
           
-          if (conflict) { 
-            if (!level) {res = 20; cout << "---conflict at dl 0!" << endl << endl << flush;}
-            conflict = 0;
+          if (conflict) {
+            if (!level) {res = 20; cout << "Conflict at DL 0 !" << endl << endl << flush;}
+            conflict = 0; // Cheap absorption detected. Then, backtract to reuse trail.
           }
         }
       }
@@ -83,8 +80,8 @@ namespace CaDiCaL {
   
     in.close();
     
-    cout << "num_true:       " << num_true << endl << flush; // num_true should be 0
-    assert(num_true == 0);
+    cout << "num_true:       " << num_true << endl << flush; // should be 0
+    assert(num_true == 0); 
 
     if (stable) { STOP (stable);   report (']'); }
     else        { STOP (unstable); report ('}'); }
