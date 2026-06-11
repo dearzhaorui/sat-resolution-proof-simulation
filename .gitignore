@@ -3,3 +3,4 @@
 */*.log
 */drat-trim
 */build
+*/src/makefile

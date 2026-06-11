@@ -1,1 +1,1 @@
-/home/rzhao/git/ignas/Rui/sat-proof/proof-simulation-read-sequence/makefile
+/home/rzhao/git/papers-code-gitHub/sat-resolution-proof-simulation/proof-simulation-read-sequence/makefile
